@@ -58,4 +58,4 @@ if __name__ == "__main__":
     seasonal_average(df)
     temperature_range(df)
     temperature_stability(df)
-    print("✅ Temperature analysis complete! Results saved to files.")
+    print(" Temperature analysis complete! Results saved to files.")
