@@ -2,6 +2,16 @@ import pandas as pd
 import glob
 import os
 
+"""
+Group Name: Sydney 11
+Course Code: HIT137
+Group Members:
+Mohamed Hatem Moneir Mansour Elshekh - 393891
+Roshan Pandey - 395865
+Kamana  - 392322
+Sejal Pradhan - 396928
+"""
+
 def load_all_data(folder="temperatures"):
     files = glob.glob(os.path.join(folder, "*.csv"))
     dataframes = [pd.read_csv(f) for f in files]

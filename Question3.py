@@ -1,5 +1,14 @@
 import turtle
+"""
+Group Name: Sydney 11
+Course Code: HIT137
+Group Members:
+Mohamed Hatem Moneir Mansour Elshekh - 393891
+Roshan Pandey - 395865
+Kamana  - 392322
+Sejal Pradhan - 396928
 
+"""
 def draw_fractal_edge(t, length, depth):
     if depth == 0:
         t.forward(length)
@@ -25,9 +34,10 @@ def draw_fractal_polygon(sides, side_length, depth):
     
     turtle.done()
 
-if __name__ == "__main__":
-    sides = int(input("Enter the number of sides: "))
-    side_length = int(input("Enter the side length (pixels): "))
-    depth = int(input("Enter the recursion depth: "))
+
+
+sides = int(input("Enter the number of sides: "))
+side_length = int(input("Enter the side length (pixels): "))
+depth = int(input("Enter the recursion depth: "))
     
-    draw_fractal_polygon(sides, side_length, depth)
+draw_fractal_polygon(sides, side_length, depth) #Recursively draw polygons
