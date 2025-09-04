@@ -63,9 +63,11 @@ def temperature_stability(df):
         for station, std in most_variable.items():
             f.write(f"Most Variable: Station {station}: StdDev {std:.2f}°C\n")
 
-if __name__ == "__main__":
-    df = load_all_data()
+try:
+    df = load_all_data("temperatures")
     seasonal_average(df)
     temperature_range(df)
     temperature_stability(df)
     print(" Temperature analysis complete! Results saved to files.")
+except:
+    print("error loading...")
