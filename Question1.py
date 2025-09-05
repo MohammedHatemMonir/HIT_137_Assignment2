@@ -52,6 +52,8 @@ W3Schools. (2024). Python file handling. https://www.w3schools.com/python/python
 
 W3Schools. (2024). Python file write. https://www.w3schools.com/python/python_file_write.asp
 
+Python Software Foundation. (2024). The __main__ module. https://docs.python.org/3/library/__main__.html
+
 DataCamp. (2024). Python new line. https://www.datacamp.com/tutorial/python-new-line
 """
 
@@ -269,12 +271,15 @@ def get_int_from_user(name):
             print("That's not a number! Please enter a valid, correct number.")
             #Do A while loop here to get the number
 
+def main():
+    """Entry point for Question 1 encryption/decryption workflow."""
+    shift1 = get_int_from_user("Enter shift1: ")
+    shift2 = get_int_from_user("Enter shift2: ")
+
+    encrypt_file(shift1, shift2)
+    decrypt_file(shift1, shift2)
+    verify()
 
 
-
-shift1 = get_int_from_user("Enter shift1: ")
-shift2 = get_int_from_user("Enter shift2: ")
-
-encrypt_file(shift1, shift2)
-decrypt_file(shift1, shift2)
-verify()
+if __name__ == "__main__":
+    main()
