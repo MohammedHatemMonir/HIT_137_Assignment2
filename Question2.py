@@ -4,6 +4,7 @@ import os
 """
 Group Name: Sydney 11
 Course Code: HIT137
+
 Group Members:
 Mohamed Hatem Moneir Mansour Elshekh - 393891
 Roshan Pandey - 395865
@@ -41,18 +42,28 @@ Main Functions Implemented:
 References
 
 ChatGPT-5. (2025). AI assistant for code layout and documentation grammar. OpenAI. https://openai.com/chatgpt
+ - Used for: comment tone and structure (no algorithmic code copied).
 
-The Organic Chemistry Tutor. (2021, March 5).How To Calculate The Standard Deviation [Video]. YouTube. https://www.youtube.com/watch?v=sMOZf4GN3oc
+The Organic Chemistry Tutor. (2021, March 5). How To Calculate The Standard Deviation [Video]. https://www.youtube.com/watch?v=sMOZf4GN3oc
+- Used for: understanding std. deviation concept applied in calculate_standard_deviation().
 
 W3Schools. (2024). Python - List Files in a Directory. https://www.w3schools.com/python/python_file_handling.asp
+- Used for: basic directory listing patterns (get_csv_files).
 
 W3Schools. (2024). Python file write. https://www.w3schools.com/python/python_file_write.asp
+- Used for: with-open patterns and text file writing (write_* functions).
 
 W3Schools. (2025). Pandas Read CSV. https://www.w3schools.com/python/pandas/pandas_csv.asp
+- Used for: reading CSVs with pandas (process_csv_file).
 
 Python Software Foundation. (2024). The __main__ module. https://docs.python.org/3/library/__main__.html
+- Used for: main entry-point guard.
 
+Learn By Example. (2025). Python open() function. https://www.learnbyexample.org/python-open-function/
+- Used for: open(..., encoding="utf-8") usage in file I/O.
 
+Python Software Foundation. (2025). Errors and Exceptions. https://docs.python.org/3/tutorial/errors.html
+- Used for: checked error types and how to catch them in except blocks.
 """
 
 def get_csv_files(folder="temperatures"):
@@ -61,9 +72,14 @@ def get_csv_files(folder="temperatures"):
     Returns a list of file paths.
     """
     files = []
-    for filename in os.listdir(folder): # Go through each file in the temperatures folder
-        if filename.endswith('.csv'): # Only process files that end with .csv extension
-            files.append(folder + "/" + filename) # Add the full file path to our list
+    try:
+        for filename in os.listdir(folder):  # Go through each file in the temperatures folder
+            if filename.endswith('.csv'):  # Only process files that end with .csv extension
+                files.append(os.path.join(folder, filename))  # Use os.path.join for portability
+    except FileNotFoundError:
+        print(f"Folder not found: {folder}")
+    except Exception as e:
+        print("Failed to list CSV files:", e)
     return files
 
 def extract_year_from_filename(file):
@@ -72,16 +88,16 @@ def extract_year_from_filename(file):
     Returns the year as an integer, or None if extraction fails.
     """
     try:
-        # Get just the filename part (remove folder path)
-        filename = file.split('/')[-1] # Split by / and take the last part
-        # Remove .csv extension to get just the name part
-        filename_no_ext = filename.replace('.csv', '') # Remove the .csv extension
-        # Get the last part after underscore (this should be the year)
-        year_part = filename_no_ext.split('_')[-1] # Split by _ and take the last part
-        year = int(year_part) # Convert the year string to an integer
+        filename = os.path.basename(file)  # Get filename only
+        filename_no_ext = os.path.splitext(filename)[0]  # Remove extension
+        year_part = filename_no_ext.split('_')[-1]  # Expect year after last underscore
+        year = int(year_part)
         return year
-    except:
-        print("Error getting year from filename:", file) # Print error if we can't extract year
+    except (ValueError, IndexError):
+        print("Error getting year from filename:", file)
+        return None
+    except Exception as e:
+        print("Unexpected error extracting year:", e)
         return None
 
 def process_csv_file(file, year):
@@ -91,12 +107,13 @@ def process_csv_file(file, year):
     """
     # Use f = open() structure to read the CSV file instead of direct pandas methods
     try:
-        f = open(file, 'r') # Open the file for reading
-        csv_data = pd.read_csv(f) # Use pandas to read the CSV data from the file handle
-        print(csv_data) # Print the data to see what we're working with
-        f.close() # Always close the file after reading
-    except:
-        print("There was an error reading the CSV file") # Print error if file reading fails
+        with open(file, 'r', encoding='utf-8') as f:  # Open the file safely
+            csv_data = pd.read_csv(f)  # Use pandas to read the CSV data
+    except FileNotFoundError:
+        print("CSV file not found:", file)
+        return []
+    except Exception as e:
+        print("There was an error reading the CSV file:", e)
         return []
     
     # Convert from wide to long format - transform month columns into individual records
@@ -107,30 +124,30 @@ def process_csv_file(file, year):
     month_number = 1 # Start with month 1 (January)
     for month in months: # Process each month column in the CSV
         try:
-            if month in csv_data.columns: # Check if this month exists as a column in the CSV
-                for i in range(len(csv_data)): # Go through each row (station) in the CSV
+            if month in csv_data.columns:  # Check if this month exists as a column in the CSV
+                for i in range(len(csv_data)):  # Go through each row (station) in the CSV
                     try:
-                        station_name = csv_data.iloc[i]['STATION_NAME'] # Get the station name from this row
-                        temperature = csv_data.iloc[i][month] # Get the temperature for this month from this row
-                        
+                        station_name = csv_data.iloc[i]['STATION_NAME']  # Get the station name
+                        temperature = csv_data.iloc[i][month]  # Get the temperature for this month
+
                         # Create date string with proper formatting (YYYY-MM-DD)
-                        if month_number < 10: # If month is 1-9, add leading zero
-                            month_str = "0" + str(month_number) # Add 0 in front (01, 02, etc.)
+                        if month_number < 10:  # If month is 1-9, add leading zero
+                            month_str = "0" + str(month_number)
                         else:
-                            month_str = str(month_number) # Use month number as is (10, 11, 12)
-                        date_string = str(year) + "-" + month_str + "-01" # Create date string (first day of month)
-                        
+                            month_str = str(month_number)
+                        date_string = str(year) + "-" + month_str + "-01"  # First day of month
+
                         # Create a record dictionary to store this temperature reading
-                        record = {} # Create empty dictionary
-                        record['Station'] = station_name # Store the station name
-                        record['Date'] = date_string # Store the date string
-                        record['Temperature'] = temperature # Store the temperature value
-                        file_data.append(record) # Add this record to our file data list
-                    except:
-                        print("Error processing row", i, "in month", month) # Print error if row processing fails
+                        record = {}
+                        record['Station'] = station_name
+                        record['Date'] = date_string
+                        record['Temperature'] = temperature
+                        file_data.append(record)
+                    except Exception as e:
+                        print("Error processing row", i, "in month", month, "-", e)
                         continue  # Skip this row if there's an error and move to next row
-        except:
-            print("Error processing month:", month) # Print error if month processing fails
+        except Exception as e:
+            print("Error processing month:", month, "-", e)
             continue  # Skip this month if there's an error and move to next month
         
         month_number = month_number + 1 # Move to next month number
@@ -183,10 +200,13 @@ def group_temperatures_by_season(data):
         date_parts = record['Date'].split('-') # Split date string by dash character
         month = int(date_parts[1]) # Get the month part (middle section) and convert to integer
         temp = record['Temperature'] # Get the temperature value from this record
-        
-        # Check if temperature is valid (not NaN or None) - skip invalid temperatures
-        if str(temp) != 'nan' and temp is not None:
-            temp = float(temp) # Convert temperature to a float number for calculations
+
+        # Check if temperature is valid robustly (skip NaN/None/invalid)
+        if pd.notna(temp):
+            try:
+                temp = float(temp) # Convert temperature to a float number for calculations
+            except (TypeError, ValueError):
+                continue
             
             # Group temperatures by Australian seasons based on month number
             if month == 12 or month == 1 or month == 2: # December, January, February = Summer
@@ -220,14 +240,13 @@ def write_seasonal_results(averages):
     Write seasonal average results to file.
     """
     try:
-        f = open("average_temp.txt", "w") # Open file for writing (create if doesn't exist, overwrite if exists)
-        f.write("Summer: " + str(round(averages['Summer'], 2)) + "°C\n") # Write summer average rounded to 2 decimal places
-        f.write("Autumn: " + str(round(averages['Autumn'], 2)) + "°C\n") # Write autumn average rounded to 2 decimal places
-        f.write("Winter: " + str(round(averages['Winter'], 2)) + "°C\n") # Write winter average rounded to 2 decimal places
-        f.write("Spring: " + str(round(averages['Spring'], 2)) + "°C\n") # Write spring average rounded to 2 decimal places
-        f.close() # Always close the file after writing
-    except:
-        print("There was an error writing the seasonal averages file") # Print error if file writing fails
+        with open("average_temp.txt", "w", encoding="utf-8") as f:  # Safe file writing
+            f.write("Summer: " + str(round(averages['Summer'], 2)) + "°C\n")
+            f.write("Autumn: " + str(round(averages['Autumn'], 2)) + "°C\n")
+            f.write("Winter: " + str(round(averages['Winter'], 2)) + "°C\n")
+            f.write("Spring: " + str(round(averages['Spring'], 2)) + "°C\n")
+    except Exception as e:
+        print("There was an error writing the seasonal averages file:", e)
 
 def seasonal_average(data):
     """
@@ -260,10 +279,13 @@ def group_temperatures_by_station(data):
     for record in data: # Go through each temperature record in our data
         station = record['Station'] # Get the station name from this record
         temp = record['Temperature'] # Get the temperature value from this record
-        
-        # Check if temperature is valid (not NaN or None) - skip invalid temperatures
-        if str(temp) != 'nan' and temp is not None:
-            temp = float(temp) # Convert temperature to a float number for calculations
+
+        # Check if temperature is valid robustly (skip NaN/None/invalid)
+        if pd.notna(temp):
+            try:
+                temp = float(temp) # Convert temperature to a float number for calculations
+            except (TypeError, ValueError):
+                continue
             
             # Add station to dictionary if we haven't seen it before
             if station not in stations:
@@ -292,34 +314,27 @@ def calculate_station_ranges(stations):
             }
     return station_ranges
 
-def find_maximum_range_station(station_ranges):
-    """
-    Find the station with the largest temperature range.
-    Returns the station name and its statistics.
-    """
-    biggest_range = 0 # Initialize the biggest range found so far
-    winner_station = "" # Initialize the name of the winning station
-    winner_stats = {} # Initialize the statistics of the winning station
-    
-    for station in station_ranges: # Go through each station's range statistics
-        if station_ranges[station]['range'] > biggest_range: # If this station has a bigger range than current winner
-            biggest_range = station_ranges[station]['range'] # Update the biggest range found
-            winner_station = station # Update the winning station name
-            winner_stats = station_ranges[station] # Update the winning station's statistics
-    
-    return winner_station, winner_stats
+def find_maximum_range_stations(station_ranges):
+    """Find station(s) with the largest temperature range and return a list of (station, stats)."""
+    if not station_ranges:
+        return []
+    biggest = max(info['range'] for info in station_ranges.values())
+    return [(name, info) for name, info in station_ranges.items() if info['range'] == biggest]
 
-def write_range_results(winner_station, winner_stats):
-    """
-    Write temperature range results to file.
-    """
+def write_range_results(tied_stations):
+    """Write temperature range results to file, including all tied stations."""
     try:
-        f = open("largest_temp_range_station.txt", "w") # Open file for writing (create if doesn't exist, overwrite if exists)
-        f.write("Station " + winner_station + ": Range " + str(round(winner_stats['range'], 2)) + "°C") # Write station name and range
-        f.write(" (Max: " + str(round(winner_stats['max'], 2)) + "°C, Min: " + str(round(winner_stats['min'], 2)) + "°C)\n") # Write max and min temperatures
-        f.close() # Always close the file after writing
-    except:
-        print("There was an error writing the temperature range file") # Print error if file writing fails
+        with open("largest_temp_range_station.txt", "w", encoding="utf-8") as f:
+            if not tied_stations:
+                f.write("No station data available.\n")
+                return
+            for station, stats in tied_stations:
+                f.write(
+                    f"Station {station}: Range {round(stats['range'], 2)}°C "
+                    f"(Max: {round(stats['max'], 2)}°C, Min: {round(stats['min'], 2)}°C)\n"
+                )
+    except Exception as e:
+        print("There was an error writing the temperature range file:", e)
 
 def temperature_range(data):
     """
@@ -337,11 +352,11 @@ def temperature_range(data):
     # Calculate min, max, and range for each station
     station_ranges = calculate_station_ranges(stations)
     
-    # Find the station with the biggest temperature range
-    winner_station, winner_stats = find_maximum_range_station(station_ranges)
+    # Find station(s) with the biggest temperature range (handle ties)
+    tied_stations = find_maximum_range_stations(station_ranges)
     
     # Write results to file
-    write_range_results(winner_station, winner_stats)
+    write_range_results(tied_stations)
 
 def calculate_standard_deviation(temps):
     """
@@ -362,7 +377,8 @@ def calculate_standard_deviation(temps):
     for temp in temps: # Go through each temperature reading again
         difference = temp - mean # Calculate how far this temperature is from the mean
         variance_sum = variance_sum + (difference * difference) # Add squared difference to sum
-    variance = variance_sum / len(temps) # Calculate variance by dividing by number of readings
+    # Use sample variance (n - 1)
+    variance = variance_sum / (len(temps) - 1)
     
     # Step 3: Calculate standard deviation (square root of variance)
     import math # Import math module to use square root function
@@ -385,37 +401,32 @@ def calculate_station_std_devs(stations):
 def find_stability_extremes(station_std_devs):
     """
     Find the most stable and most variable stations.
-    Returns the names and standard deviations of both stations.
+    Returns (stable_stations, variable_stations, min_std, max_std).
     """
-    if len(station_std_devs) == 0: # No stations to analyze
-        return "", "", 0, 0
-    
-    min_std = min(station_std_devs.values()) # Find the smallest standard deviation value
-    max_std = max(station_std_devs.values()) # Find the largest standard deviation value
-    
-    most_stable_station = "" # Initialize name of most stable station
-    most_variable_station = "" # Initialize name of most variable station
-    
-    # Find which stations have the minimum and maximum standard deviations
-    for station in station_std_devs: # Go through each station's standard deviation
-        if station_std_devs[station] == min_std: # If this station has the lowest standard deviation
-            most_stable_station = station # This is our most stable station
-        if station_std_devs[station] == max_std: # If this station has the highest standard deviation
-            most_variable_station = station # This is our most variable station
-    
-    return most_stable_station, most_variable_station, min_std, max_std
+    if len(station_std_devs) == 0:  # No stations to analyze
+        return [], [], 0, 0
 
-def write_stability_results(most_stable_station, most_variable_station, min_std, max_std):
-    """
-    Write temperature stability results to file.
-    """
+    min_std = min(station_std_devs.values())  # Find the smallest standard deviation value
+    max_std = max(station_std_devs.values())  # Find the largest standard deviation value
+
+    most_stable_stations = [s for s, sd in station_std_devs.items() if sd == min_std]
+    most_variable_stations = [s for s, sd in station_std_devs.items() if sd == max_std]
+
+    return most_stable_stations, most_variable_stations, min_std, max_std
+
+def write_stability_results(most_stable_stations, most_variable_stations, min_std, max_std):
+    """Write temperature stability results to file, supporting ties."""
     try:
-        f = open("temperature_stability_stations.txt", "w") # Open file for writing (create if doesn't exist, overwrite if exists)
-        f.write("Most Stable: Station " + most_stable_station + ": StdDev " + str(round(min_std, 2)) + "°C\n") # Write most stable station info
-        f.write("Most Variable: Station " + most_variable_station + ": StdDev " + str(round(max_std, 2)) + "°C\n") # Write most variable station info
-        f.close() # Always close the file after writing
-    except:
-        print("There was an error writing the temperature stability file") # Print error if file writing fails
+        with open("temperature_stability_stations.txt", "w", encoding="utf-8") as f:
+            if not most_stable_stations and not most_variable_stations:
+                f.write("No station data available.\n")
+                return
+            stable_text = ", ".join(f"Station {s}" for s in most_stable_stations) if most_stable_stations else "N/A"
+            variable_text = ", ".join(f"Station {s}" for s in most_variable_stations) if most_variable_stations else "N/A"
+            f.write(f"Most Stable: {stable_text}: StdDev {round(min_std, 2)}°C\n")
+            f.write(f"Most Variable: {variable_text}: StdDev {round(max_std, 2)}°C\n")
+    except Exception as e:
+        print("There was an error writing the temperature stability file:", e)
 
 def temperature_stability(data):
     """
@@ -437,11 +448,11 @@ def temperature_stability(data):
     station_std_devs = calculate_station_std_devs(stations)
     
     # Find most stable and most variable stations
-    most_stable_station, most_variable_station, min_std, max_std = find_stability_extremes(station_std_devs)
+    most_stable_stations, most_variable_stations, min_std, max_std = find_stability_extremes(station_std_devs)
     
     # Write results to file
-    if most_stable_station and most_variable_station: # Only write if we found stations
-        write_stability_results(most_stable_station, most_variable_station, min_std, max_std)
+    if most_stable_stations or most_variable_stations:  # Only write if we found stations
+        write_stability_results(most_stable_stations, most_variable_stations, min_std, max_std)
 
 def main():
     """Entry point for Question 2 temperature analyses."""

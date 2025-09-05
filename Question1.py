@@ -1,6 +1,7 @@
 """
 Group Name: Sydney 11
 Course Code: HIT137
+
 Group Members:
 Mohamed Hatem Moneir Mansour Elshekh - 393891
 Roshan Pandey - 395865
@@ -41,20 +42,34 @@ Sgd gkhbj ahemd een iklfi eldh jgd kzpo cef adddzjg jgd igzco mhkkemi.
 References
 
 ChatGPT-5. (2025). AI assistant for code layout and documentation grammar. OpenAI. https://openai.com/chatgpt
+- Used for: wording/structure of comments and docstrings (no algorithmic code copied).
 
 Computerphile. (2021, March 5). Caesar cipher explained [Video]. YouTube. https://www.youtube.com/watch?v=sMOZf4GN3oc
+- Used for: classical cipher concepts understanding.
 
 GeeksforGeeks. (2024). ASCII values in Python. https://www.geeksforgeeks.org/ascii-in-python/
+- Used for: ord/chr conversions inside encrypt_char/decrypt_char.
 
 ness-intricity101. (2010, May 18). What is metadata? [Video]. YouTube. https://www.youtube.com/watch?v=HXAstVP3-y0
+- Used for: idea of storing per-character flags to ensure reversible mapping.
 
 W3Schools. (2024). Python file handling. https://www.w3schools.com/python/python_file_handling.asp
+- Used for: basic file I/O patterns.
 
 W3Schools. (2024). Python file write. https://www.w3schools.com/python/python_file_write.asp
+- Used for: writing text files (saving encrypted/decrypted output).
 
 Python Software Foundation. (2024). The __main__ module. https://docs.python.org/3/library/__main__.html
+- Used for: standard entry-point guard (if __name__ == "__main__").
+
+Learn By Example. (2025). Python open() function. https://www.learnbyexample.org/python-open-function/
+- Used for: open(..., encoding="utf-8") usage in file reading/writing.
 
 DataCamp. (2024). Python new line. https://www.datacamp.com/tutorial/python-new-line
+- Used for: newline handling when writing metadata header and ciphertext.
+
+Python Software Foundation. (2025). Errors and Exceptions. https://docs.python.org/3/tutorial/errors.html
+- Used for: checked error types and how to catch them in except blocks.
 """
 
 def classify_char(c):
@@ -162,10 +177,10 @@ def encrypt_file(shift1, shift2):
     Stores a metadata line at the top indicating the classification of each character.
     """
     try:
-        f = open("raw_text.txt", "r") #open the raw text file for reading
-        text = f.read() #read all content from the file
-    except:
-        print("raw_text.txt file does not exist.")
+        with open("raw_text.txt", "r", encoding="utf-8") as f:  # Safely read the raw text file
+            text = f.read()
+    except Exception as e:
+        print("Failed to read raw_text.txt:", e)
         return
 
     # Step 1: Create classification flags for each character
@@ -184,11 +199,11 @@ def encrypt_file(shift1, shift2):
         encrypted += encrypted_char #add the character back to the encrypted string.
 
     try:
-        f = open("encrypted_text.txt", "x") #open the encrypted text file for writing, if it doesn't exist, create it.
-        f.write(flags + "\n") #save the meta data on top of the encrypted file then add a new line
-        f.write(encrypted) #save the encryption text
-    except:
-        print("Failed to create or read encrypted_text.txt")
+        with open("encrypted_text.txt", "w", encoding="utf-8") as f:  # Overwrite or create output file safely
+            f.write(flags + "\n")
+            f.write(encrypted)
+    except Exception as e:
+        print("Failed to write encrypted_text.txt:", e)
         return
 
 def decrypt_file(shift1, shift2):
@@ -196,12 +211,12 @@ def decrypt_file(shift1, shift2):
     Decrypt the contents of "encrypted_text.txt" and save to "decrypted_text.txt".
     """
     try:
-        f = open("encrypted_text.txt", "r") #open the encrypted text file for reading
-        first_line = f.readline() #Read the first line and set the pointer right after the first line
-        flags = first_line.strip() #strip the first line from excess spaces at the beginning and end
-        encrypted_text = f.read() #read the file from where the pointer left off (after the first line)
-    except:
-        print("encrypted_text.txt file does not exist.")
+        with open("encrypted_text.txt", "r", encoding="utf-8") as f:  # Read the encrypted file
+            first_line = f.readline()
+            flags = first_line.strip()
+            encrypted_text = f.read()
+    except Exception as e:
+        print("Failed to read encrypted_text.txt:", e)
         return
 
     if len(flags) != len(encrypted_text):
@@ -217,10 +232,10 @@ def decrypt_file(shift1, shift2):
         decrypted += decrypted_char # Add the decrypted character to result
 
     try:
-        f = open("decrypted_text.txt", "x") #open the decrypted text file for writing, if it doesn't exist, create it
-        f.write(decrypted) #write the decrypted content to the file
-    except:
-        print("decrypted_text.txt file does not exist.")
+        with open("decrypted_text.txt", "w", encoding="utf-8") as f:  # Overwrite or create output file
+            f.write(decrypted)
+    except Exception as e:
+        print("Failed to write decrypted_text.txt:", e)
         return
 
 def verify():
@@ -228,13 +243,11 @@ def verify():
     Compare "raw_text.txt" and "decrypted_text.txt" and print whether decryption was successful.
     """
     try:
-        # Open both the original file and the decrypted file
-        f1 = open("raw_text.txt", "r") #open the original raw text file for reading
-        f2 = open("decrypted_text.txt", "r") #open the decrypted text file for reading
-        original = f1.read() # Read the original text content
-        decrypted = f2.read() # Read the decrypted text content
-    except:
-        print("decrypted_text.txt or raw_text.txt  file does not exist.")
+        with open("raw_text.txt", "r", encoding="utf-8") as f1, open("decrypted_text.txt", "r", encoding="utf-8") as f2:
+            original = f1.read()
+            decrypted = f2.read()
+    except Exception as e:
+        print("Failed to verify files:", e)
         return
 
     # Compare the two texts to see if decryption worked correctly
@@ -261,13 +274,14 @@ def get_int_from_user(name):
             try:
                 val = float(user_input) #Round the float numbers to get an int (without breaking the loop to make it more smooth for the user)
                 user_input = round(val)
-            except:
+            except (ValueError, TypeError):
+                # If conversion to float fails, we'll try int() below which will also raise on invalid input
                 pass
 
             val = int(user_input) #if this did not go to the except, we have got a valid number
             isNumber = True #mark that we got a number
             return val #Return the number and exit the while loop
-        except:
+        except Exception:
             print("That's not a number! Please enter a valid, correct number.")
             #Do A while loop here to get the number
 
